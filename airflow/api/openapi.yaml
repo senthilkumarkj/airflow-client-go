@@ -1,20 +1,3 @@
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
-
 openapi: 3.0.3
 info:
   contact:
@@ -129,14 +112,6 @@ info:
     - APIs are designed to be backward compatible.
     - Any changes to the API will first go through a deprecation phase.
 
-    # Summary of Changes
-
-    | Airflow version | Description |
-    |-|-|
-    | v2.0 | Initial release |
-    | v2.0.2    | Added /plugins endpoint |
-    | v2.1 | New providers endpoint |
-
     # Trying the API
 
     You can use a third party client, such as [curl](https://curl.haxx.se/), [HTTPie](https://httpie.org/),
@@ -181,9 +156,9 @@ info:
     and it is even possible to add your own method.
 
     If you want to check which auth backend is currently set, you can use
-    `airflow config get-value api auth_backend` command as in the example below.
+    `airflow config get-value api auth_backends` command as in the example below.
     ```bash
-    $ airflow config get-value api auth_backend
+    $ airflow config get-value api auth_backends
     airflow.api.auth.backend.basic_auth
     ```
     The default is to deny all requests.
@@ -564,6 +539,9 @@ paths:
       x-openapi-router-controller: airflow.api_connexion.endpoints.connection_endpoint
   /dags:
     get:
+      description: |
+        List DAGs in the database.
+        `dag_id_pattern` can be set to match dags of a specific pattern
       operationId: get_dags
       parameters:
       - description: The numbers of items to return.
@@ -611,7 +589,7 @@ paths:
           type: array
         style: form
       - description: |
-          Only return active DAGs.
+          Only filter active DAGs.
 
           *New in version 2.1.1*
         explode: true
@@ -624,8 +602,6 @@ paths:
         style: form
       - description: |
           If set, only return DAGs with dag_ids matching this pattern.
-
-          *New in version 2.3.0*
         explode: true
         in: query
         name: dag_id_pattern
@@ -648,6 +624,116 @@ paths:
           description: Request not authenticated due to missing, invalid, authentication
             info.
       summary: List DAGs
+      tags:
+      - DAG
+      x-openapi-router-controller: airflow.api_connexion.endpoints.dag_endpoint
+    patch:
+      description: |
+        Update DAGs of a given dag_id_pattern using UpdateMask.
+        This endpoint allows specifying `~` as the dag_id_pattern to update all DAGs.
+        *New in version 2.3.0*
+      operationId: patch_dags
+      parameters:
+      - description: The numbers of items to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100
+          type: integer
+        style: form
+      - description: The number of items to skip before starting to collect the result
+          set.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      - description: |
+          List of tags to filter results.
+
+          *New in version 2.2.0*
+        explode: true
+        in: query
+        name: tags
+        required: false
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      - description: |
+          The fields to update on the resource. If absent or empty, all modifiable fields are updated.
+          A comma-separated list of fully qualified names of fields.
+        explode: false
+        in: query
+        name: update_mask
+        required: false
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      - description: |
+          Only filter active DAGs.
+
+          *New in version 2.1.1*
+        explode: true
+        in: query
+        name: only_active
+        required: false
+        schema:
+          default: true
+          type: boolean
+        style: form
+      - description: |
+          If set, only update DAGs with dag_ids matching this pattern.
+        explode: true
+        in: query
+        name: dag_id_pattern
+        required: true
+        schema:
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            example:
+              is_paused: true
+            schema:
+              $ref: '#/components/schemas/DAG'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DAGCollection'
+          description: Success.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Request not authenticated due to missing, invalid, authentication
+            info.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Client does not have sufficient permission.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: A specified resource is not found.
+      summary: Update DAGs
       tags:
       - DAG
       x-openapi-router-controller: airflow.api_connexion.endpoints.dag_endpoint
@@ -2061,6 +2147,76 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: A specified resource is not found.
       summary: Get a task instance
+      tags:
+      - TaskInstance
+      x-openapi-router-controller: airflow.api_connexion.endpoints.task_instance_endpoint
+  /dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/{map_index}:
+    get:
+      description: |
+        Get details of a mapped task instance.
+
+        *New in version 2.3.0*
+      operationId: get_mapped_task_instance
+      parameters:
+      - description: The DAG ID.
+        explode: false
+        in: path
+        name: dag_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The DAG run ID.
+        explode: false
+        in: path
+        name: dag_run_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The task ID.
+        explode: false
+        in: path
+        name: task_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The map index.
+        explode: false
+        in: path
+        name: map_index
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskInstance'
+          description: Success.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Request not authenticated due to missing, invalid, authentication
+            info.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Client does not have sufficient permission.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: A specified resource is not found.
+      summary: Get a mapped task instance
       tags:
       - TaskInstance
       x-openapi-router-controller: airflow.api_connexion.endpoints.task_instance_endpoint
@@ -3669,6 +3825,15 @@ components:
       schema:
         type: string
       style: simple
+    MapIndex:
+      description: The map index.
+      explode: false
+      in: path
+      name: map_index
+      required: true
+      schema:
+        type: integer
+      style: simple
     DAGRunID:
       description: The DAG run ID.
       explode: false
@@ -3918,6 +4083,19 @@ components:
       required: false
       schema:
         type: string
+      style: form
+    OnlyActive:
+      description: |
+        Only filter active DAGs.
+
+        *New in version 2.1.1*
+      explode: true
+      in: query
+      name: only_active
+      required: false
+      schema:
+        default: true
+        type: boolean
       style: form
     FileToken:
       description: |
@@ -4597,6 +4775,7 @@ components:
       example:
         end_date: end_date
         unixname: unixname
+        rendered_fields: '{}'
         execution_date: execution_date
         pool_slots: 5
         pool: pool
@@ -4680,6 +4859,12 @@ components:
           type: string
         sla_miss:
           $ref: '#/components/schemas/SLAMiss'
+        rendered_fields:
+          description: |
+            JSON object describing rendered fields.
+
+            *New in version 2.3.0*
+          type: object
       type: object
     TaskInstanceCollection:
       allOf:
@@ -5621,15 +5806,15 @@ components:
           type: array
       type: object
     ScheduleInterval:
+      anyOf:
+      - $ref: '#/components/schemas/TimeDelta'
+      - $ref: '#/components/schemas/RelativeDelta'
+      - $ref: '#/components/schemas/CronExpression'
       description: |
         Schedule interval. Defines how often DAG runs, this object gets added to your latest task instance's
         execution_date to figure out the next schedule.
       discriminator:
         propertyName: __type
-      oneOf:
-      - $ref: '#/components/schemas/TimeDelta'
-      - $ref: '#/components/schemas/RelativeDelta'
-      - $ref: '#/components/schemas/CronExpression'
       readOnly: true
     TimeDelta:
       description: Time delta

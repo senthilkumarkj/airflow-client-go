@@ -1,22 +1,3 @@
-<!--
- Licensed to the Apache Software Foundation (ASF) under one
- or more contributor license agreements.  See the NOTICE file
- distributed with this work for additional information
- regarding copyright ownership.  The ASF licenses this file
- to you under the Apache License, Version 2.0 (the
- "License"); you may not use this file except in compliance
- with the License.  You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing,
- software distributed under the License is distributed on an
- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- KIND, either express or implied.  See the License for the
- specific language governing permissions and limitations
- under the License.
- -->
-
 # \TaskInstanceApi
 
 All URIs are relative to *http://localhost/api/v1*
@@ -25,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**GetExtraLinks**](TaskInstanceApi.md#GetExtraLinks) | **Get** /dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/links | List extra links
 [**GetLog**](TaskInstanceApi.md#GetLog) | **Get** /dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs/{task_try_number} | Get logs
+[**GetMappedTaskInstance**](TaskInstanceApi.md#GetMappedTaskInstance) | **Get** /dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/{map_index} | Get a mapped task instance
 [**GetTaskInstance**](TaskInstanceApi.md#GetTaskInstance) | **Get** /dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id} | Get a task instance
 [**GetTaskInstances**](TaskInstanceApi.md#GetTaskInstances) | **Get** /dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances | List task instances
 [**GetTaskInstancesBatch**](TaskInstanceApi.md#GetTaskInstancesBatch) | **Post** /dags/~/dagRuns/~/taskInstances/list | List task instances (batch)
@@ -184,6 +166,85 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: application/json, text/plain
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetMappedTaskInstance
+
+> TaskInstance GetMappedTaskInstance(ctx, dagId, dagRunId, taskId, mapIndex).Execute()
+
+Get a mapped task instance
+
+
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "./openapi"
+)
+
+func main() {
+    dagId := "dagId_example" // string | The DAG ID.
+    dagRunId := "dagRunId_example" // string | The DAG run ID.
+    taskId := "taskId_example" // string | The task ID.
+    mapIndex := int32(56) // int32 | The map index.
+
+    configuration := openapiclient.NewConfiguration()
+    api_client := openapiclient.NewAPIClient(configuration)
+    resp, r, err := api_client.TaskInstanceApi.GetMappedTaskInstance(context.Background(), dagId, dagRunId, taskId, mapIndex).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `TaskInstanceApi.GetMappedTaskInstance``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `GetMappedTaskInstance`: TaskInstance
+    fmt.Fprintf(os.Stdout, "Response from `TaskInstanceApi.GetMappedTaskInstance`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**dagId** | **string** | The DAG ID. | 
+**dagRunId** | **string** | The DAG run ID. | 
+**taskId** | **string** | The task ID. | 
+**mapIndex** | **int32** | The map index. | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetMappedTaskInstanceRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+
+
+### Return type
+
+[**TaskInstance**](TaskInstance.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
